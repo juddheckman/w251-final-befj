@@ -61,18 +61,23 @@ def groupData(df):
 def timeIndex(df):
 
     #adding previous times  add more if needed
-    df['T1']= ""
-    df['T2']= ""
+    df['T1_P']= ""
+    df['T2_P']= ""
+
+    df['T1_V']= ""
+    df['T2_V']= ""
 
     #iterating over rows, will need ot adjust based on number of past times needed
     for i, r in df.iterrows():
         if i>0:
             if df.irow(i)['SYMBOL']== df.irow(i-1)['SYMBOL']:                
-                df.ix[i,'T1']=df.irow(i-1)['AvgPrice']
+                df.ix[i,'T1_P']=df.irow(i-1)['AvgPrice']
+                df.ix[i,'T1_V']=df.irow(i-1)['TotSize']
 
         if i>1:
             if df.irow(i)['SYMBOL']== df.irow(i-2)['SYMBOL']:                
-                df.ix[i,'T2']=df.irow(i-2)['AvgPrice']
+                df.ix[i,'T2_P']=df.irow(i-2)['AvgPrice']
+                df.ix[i,'T2_V']=df.irow(i-2)['TotSize']
 
     return df
 
@@ -81,5 +86,6 @@ if __name__ == "__main__":
     df = readCSV('samp50_jh.csv', 50)  #param for number of rows used for testing
     df = transformTime(df)
     agg = groupData(df)
+    print agg
     final=timeIndex(agg)
     print final
