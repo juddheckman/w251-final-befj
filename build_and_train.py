@@ -1,5 +1,6 @@
 import time
 import datetime
+import config
 
 import sys
 
@@ -15,19 +16,19 @@ def transform_time(t):
     return time.mktime(datetime.datetime.strptime(ds, '%Y-%m-%dT%H:%M:%S').timetuple())
 
 
-def main():
-    conf = SparkConf().setAppName('symbols')
-    sc = SparkContext(conf=conf)
+def build_features(fileName):
+    #conf = SparkConf().setAppName('symbols')
+    #sc = SparkContext(conf=conf)
 
     sqlContext = SQLContext(sc)
-    data = sc.textFile("file:///root/quote_streaming/data/rawdata.csv").map(lambda line: line.split(","))
+    data = sc.textFile(fileName).map(lambda line: line.split(","))
     rows = data.filter(lambda x: x[0] != 'SYMBOL')
     df = rows.map(lambda p: (p[0].strip(), transform_time(p[2].strip()), float(p[3].strip()), float(p[4].strip())))
 
     symbols = df.map(lambda x: Row(symbol=x[0], time=x[1], price=x[2], volume=x[3]))
     schemaSymbols = sqlContext.inferSchema(symbols)
     schemaSymbols.registerTempTable("symbols")
-    
+
     trades = sqlContext.sql("""SELECT symbol, time, sum(price*volume)/sum(volume) as avg_price, sum(volume) as volume from
             symbols group by symbol, time""")
     trades = trades.map(lambda x: Row(symbol=x[0], time=x[1], price=x[2], volume=x[3]))
@@ -69,4 +70,28 @@ def main():
     sc.stop()
 
 if __name__ == '__main__':
-    main()
+    begintime = time.time()
+
+    config.setupSpark()
+
+    if len(sys.argv) !=6 or sys.argv[1] == "-h":
+        print "Usage: initial_model.py <sparkloc master> <sparkhost> <executor memory> <datafile> <num posts (or rows)>"
+        sys.exit()
+
+    sparkloc = sys.argv[1] # local for local
+    sparkhost = sys.argv[2] # localhost for local
+    fileName = sys.argv[3]
+
+    execmem = sys.argv[4]
+    numrows = int(sys.argv[5])
+
+    conf = (SparkConf()
+         .setMaster(sparkloc)
+         .setAppName("My app")
+         .setSparkHome("/usr/local/spark")
+         .set("spark.driver.host", sparkhost)
+         .set("spark.executor.memory", execmem))
+    sc = SparkContext(conf = conf)
+
+    build_features(fileName)
+

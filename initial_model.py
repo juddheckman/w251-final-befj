@@ -1,6 +1,6 @@
 from pyspark import SparkConf, SparkContext
 from pyspark.mllib.classification import LogisticRegressionWithSGD, SVMWithSGD
-from pyspark.mllib.regression import LabeledPoint
+from pyspark.mllib.regression import LabeledPoint, LinearRegressionWithSGD
 from pyspark.storagelevel import StorageLevel
 from numpy import array
 import config
@@ -36,15 +36,16 @@ def readCSV(fileName,numrows):
 
 #Iterates through dfTrain, building the Y vector
 def buildY(dfTrain):
-    Y = dfTrain.tnext_dir.values
+    Y = dfTrain.price_label.values
 
     return Y
 
 #Iterates through dfTrain, building the X matrix
 def buildX(dfTrain):
     begintime = time.time()
+    features = ['price', 'price_t-1', 'price_t-2', 'price_t-3', 'volume', 'volume_t-1', 'volume_t-2', 'volume_t-3']
 
-    X = dfTrain.as_matrix(['AVG_PRICE', 't1', 't2', 't3'])
+    X = dfTrain.as_matrix(features)
 
     endtime = time.time()
     totaltime = endtime-begintime
@@ -60,8 +61,8 @@ def split(X,Y):
 #Trains and return the model
 def buildModel(trainrdd):
     
-    model = LogisticRegressionWithSGD.train(trainrdd)
-
+    #model = LogisticRegressionWithSGD.train(trainrdd)
+    model = LinearRegressionWithSGD.train(trainrdd)
     return model
 
 #Returns prediction of whether post should be closed or open for a single post
