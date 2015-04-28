@@ -23,7 +23,7 @@ numIterations = 30
 ##################
     
 #Reads numrows of csvfiles and returns dataframe dfTrain
-def readCSV(fileName,numrows):
+def readCSV(fileName):
     begintime = time.time()
 
     dfTrain = pd.read_csv(fileName, sep=",", header=False, encoding = 'utf8')
@@ -36,14 +36,24 @@ def readCSV(fileName,numrows):
 
 #Iterates through dfTrain, building the Y vector
 def buildY(dfTrain):
-    Y = dfTrain.price_label.values
+
+    #labelName = 'price_dir_label'
+    labelName = 'volume_dir_label'
+    #labelName = 'tnext_dir'
+    #labelName = 'tnext'
+
+    Y = dfTrain[labelName].values
 
     return Y
 
 #Iterates through dfTrain, building the X matrix
 def buildX(dfTrain):
     begintime = time.time()
-    features = ['price', 'price_t-1', 'price_t-2', 'price_t-3', 'volume', 'volume_t-1', 'volume_t-2', 'volume_t-3']
+
+    #features = ['price', 'price_t-1', 'price_t-2', 'price_t-3', 'volume', 'volume_t-1', 'volume_t-2', 'volume_t-3']
+    features = ['price', 'price_t-1', 'price_t-2', 'volume10k', 'volume10k_t-1']
+    #features = ['AVG_PRICE', 't1', 't2', 't3']
+    print "features: " + ', '.join(features)
 
     X = dfTrain.as_matrix(features)
 
@@ -61,8 +71,8 @@ def split(X,Y):
 #Trains and return the model
 def buildModel(trainrdd):
     
-    #model = LogisticRegressionWithSGD.train(trainrdd)
-    model = LinearRegressionWithSGD.train(trainrdd)
+    model = LogisticRegressionWithSGD.train(trainrdd)
+    #model = LinearRegressionWithSGD.train(trainrdd)
     return model
 
 #Returns prediction of whether post should be closed or open for a single post
@@ -125,7 +135,7 @@ if __name__ == "__main__":
     xtestagg = []
     fullytest = []
     
-    dfTrain = readCSV(fileName,numrows)
+    dfTrain = readCSV(fileName)
         
     Y = buildY(dfTrain)
 
