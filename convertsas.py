@@ -110,8 +110,8 @@ def convert_sas_file(sasfilename, csvfilename, tempfilename, storagetype):
 			linecount+=1
                 
 			# DEBUG 
-			if linecount > 10000:
-				break
+			#if linecount > 10000:
+			#	break
 		logfile = open(logfilename,'a')		
 		logfile.write(thishost + ": Finished converting to and creating csv file " + local_path + csvfilename + "\n")
 		logfile.close()	
